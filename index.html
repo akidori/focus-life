@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>FL</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Noto+Sans+JP:wght@200;300&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #07070a;
+  --glass: rgba(255,255,255,0.016);
+  --b-w: rgba(255,255,255,0.055);
+  --b-rgb: linear-gradient(135deg, rgba(255,72,52,0.22), rgba(70,130,255,0.18), rgba(50,210,160,0.16));
+  --text: rgba(255,255,255,0.96);
+  --dim: rgba(255,255,255,0.55);
+  --faint: rgba(255,255,255,0.30);
+}
+
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Noto Sans JP', sans-serif; font-weight: 300; -webkit-font-smoothing: antialiased; overflow: hidden; text-shadow: -1.5px 0 rgba(255,50,40,0.6), 1.5px 0 rgba(40,120,255,0.6), 0 0 20px rgba(0,0,0,1); }
+
+.app { max-width: 390px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; }
+
+/* ambient glow */
+.app::after {
+  content: '';
+  position: fixed;
+  top: -80px; left: 50%; transform: translateX(-50%);
+  width: 280px; height: 180px;
+  background: conic-gradient(from 180deg, rgba(255,60,50,0.05), rgba(60,130,255,0.06), rgba(50,200,150,0.04), rgba(180,60,255,0.04), rgba(255,60,50,0.05));
+  border-radius: 50%; filter: blur(50px);
+  pointer-events: none; z-index: 0;
+  animation: glow 18s linear infinite;
+}
+@keyframes glow { 0%,100%{opacity:.7} 50%{opacity:1} }
+
+/* NAV */
+.nav {
+  display: flex; align-items: center;
+  padding: 22px 28px 14px; gap: 24px;
+  border-bottom: 1px solid var(--b-w);
+  position: relative; z-index: 10;
+}
+.logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 14px; font-weight: 300;
+  letter-spacing: 7px; color: var(--dim);
+  margin-right: auto;
+}
+.tab {
+  background: none; border: none;
+  color: var(--faint); font-family: 'Noto Sans JP', sans-serif;
+  font-size: 10px; font-weight: 200; letter-spacing: 2.5px;
+  cursor: pointer; transition: color .25s; padding: 2px 0;
+}
+.tab.on { color: var(--text); }
+
+/* TIMEBAR */
+.timebar {
+  padding: 9px 28px;
+  border-bottom: 1px solid var(--b-w);
+  display: flex; justify-content: space-between;
+  position: relative; z-index: 10;
+}
+.timebar-l { font-size: 9px; color: var(--faint); letter-spacing: 2px; }
+.timebar-r { font-family: 'Cormorant Garamond', serif; font-size: 13px; color: var(--dim); letter-spacing: 1px; }
+
+/* SCROLL */
+.scroll { flex:1; overflow-y:auto; overflow-x:hidden; padding: 34px 28px 60px; scrollbar-width:none; position:relative; z-index:5; }
+.scroll::-webkit-scrollbar { display:none; }
+
+/* PAGES */
+.pg { display:none; }
+.pg.on { display:block; animation: pi .35s ease; }
+@keyframes pi { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
+
+/* RGB CARD */
+.card {
+  background: var(--glass);
+  border-radius: 2px;
+  padding: 22px; margin-bottom: 10px;
+  position: relative; overflow: hidden;
+}
+.card::before {
+  content:''; position:absolute; inset:0; border-radius:2px; padding:1px;
+  background: var(--b-rgb);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  pointer-events: none;
+}
+.card-tag { font-size:9px; letter-spacing:3px; color:var(--faint); margin-bottom:18px; }
+
+/* GATE */
+.g-q {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 36px; font-weight: 300; line-height: 1.15;
+  color: var(--text); margin-bottom: 6px; letter-spacing: -.5px;
+}
+.g-q em { font-style:italic; color:var(--dim); }
+.g-sub { font-size: 10px; color: var(--faint); letter-spacing:1.5px; margin-bottom:36px; line-height:1.8; }
+.g-axis {
+  display:flex; align-items:baseline; gap:10px;
+  padding-bottom:18px; margin-bottom:32px;
+  border-bottom: 1px solid var(--b-w);
+}
+.g-time { font-family:'Cormorant Garamond',serif; font-size:26px; font-weight:300; color:var(--dim); }
+.g-sep { font-size:10px; color:var(--faint); }
+.g-tasks { margin-bottom:36px; }
+.g-task {
+  font-size:12px; color:var(--dim); padding:10px 0;
+  border-bottom:1px solid var(--b-w); letter-spacing:.5px;
+  display:flex; align-items:center; gap:10px;
+}
+.g-task::before { content:''; width:3px; height:3px; border-radius:50%; background:rgba(255,255,255,.15); flex-shrink:0; }
+.btns { display:flex; flex-direction:column; gap:8px; }
+.btn {
+  width:100%; padding:15px 20px; border-radius:2px;
+  font-family:'Noto Sans JP',sans-serif; font-size:10px;
+  font-weight:200; letter-spacing:3px; cursor:pointer; transition:all .2s;
+}
+.btn-y { background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.09); color:var(--text); }
+.btn-y:active { background:rgba(255,255,255,.09); }
+.btn-n { background:transparent; border:1px solid var(--b-w); color:var(--faint); }
+
+/* MORNING */
+.s-head { font-size:9px; letter-spacing:3px; color:var(--faint); margin-bottom:20px; }
+.tf { margin-bottom:22px; }
+.tf-num { font-family:'Cormorant Garamond',serif; font-size:11px; color:var(--faint); letter-spacing:2px; margin-bottom:6px; }
+.tf input {
+  width:100%; background:transparent; border:none;
+  border-bottom:1px solid var(--b-w); color:var(--text);
+  font-family:'Noto Sans JP',sans-serif; font-size:13px; font-weight:200;
+  padding:9px 0; outline:none; letter-spacing:.5px; transition:border-color .25s;
+}
+.tf input:focus { border-bottom-color:rgba(255,255,255,.18); }
+.tf input::placeholder { color:var(--faint); font-size:12px; }
+.m-lbl { font-size:9px; letter-spacing:2.5px; color:var(--faint); margin:28px 0 10px; }
+.pips { display:flex; gap:5px; margin-bottom:32px; }
+.pip { flex:1; height:2px; background:var(--b-w); border-radius:1px; cursor:pointer; transition:background .2s; }
+.pip.on { background:rgba(255,255,255,.35); }
+
+/* NIGHT */
+.ci { display:flex; align-items:center; gap:14px; padding:13px 0; border-bottom:1px solid var(--b-w); cursor:pointer; }
+.cb { width:13px; height:13px; border:1px solid var(--b-w); border-radius:1px; flex-shrink:0; transition:all .2s; position:relative; }
+.cb.on { background:rgba(255,255,255,.07); border-color:rgba(255,255,255,.18); }
+.cb.on::after { content:''; position:absolute; top:2px; left:1px; width:8px; height:4px; border-left:1px solid rgba(255,255,255,.55); border-bottom:1px solid rgba(255,255,255,.55); transform:rotate(-45deg); }
+.ct { font-size:13px; color:var(--text); font-weight:200; letter-spacing:.3px; flex:1; transition:color .2s; }
+.ct.on { color:var(--faint); }
+.note-f {
+  width:100%; background:transparent; border:none;
+  border-bottom:1px solid var(--b-w); color:var(--text);
+  font-family:'Noto Sans JP',sans-serif; font-size:12px; font-weight:200;
+  padding:12px 0; outline:none; resize:none; min-height:56px;
+  letter-spacing:.5px; margin:28px 0 32px;
+}
+.note-f::placeholder { color:var(--faint); }
+
+/* STATS */
+.st-row { display:flex; gap:8px; margin-bottom:10px; }
+.st-blk {
+  flex:1; background:var(--glass); border-radius:2px; padding:16px 14px;
+  position:relative; overflow:hidden;
+}
+.st-blk::before {
+  content:''; position:absolute; inset:0; border-radius:2px; padding:1px;
+  background: linear-gradient(135deg, rgba(255,72,52,.13), rgba(70,130,255,.1), rgba(50,210,160,.09));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude; pointer-events:none;
+}
+.st-n { font-family:'Cormorant Garamond',serif; font-size:34px; font-weight:300; color:var(--dim); line-height:1; }
+.st-u { font-size:9px; color:var(--faint); letter-spacing:2px; margin-top:5px; }
+.div { height:1px; background:var(--b-w); margin:26px 0; }
+.bars { display:flex; align-items:flex-end; gap:5px; height:72px; margin-bottom:8px; }
+.bc { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:6px; height:100%; }
+.bf { width:100%; border-radius:1px 1px 0 0; min-height:2px; transition:height .7s cubic-bezier(.34,1.2,.64,1); background:rgba(255,255,255,.05); }
+.bf.d { background:linear-gradient(180deg,rgba(255,72,52,.28),rgba(70,130,255,.2)); }
+.bf.t { background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,.08)); }
+.bd { font-size:9px; color:var(--faint); font-family:'Cormorant Garamond',serif; }
+.hr { display:flex; align-items:flex-start; gap:18px; padding:13px 0; border-bottom:1px solid var(--b-w); }
+.hd { font-family:'Cormorant Garamond',serif; font-size:11px; color:var(--faint); min-width:34px; padding-top:1px; }
+.ht { flex:1; }
+.hi { font-size:11px; color:var(--dim); margin-bottom:2px; letter-spacing:.3px; }
+.hi.on { color:var(--faint); }
+.hs { font-family:'Cormorant Garamond',serif; font-size:18px; color:var(--dim); }
+.empty { font-size:10px; color:var(--faint); letter-spacing:1px; padding:22px 0; text-align:center; }
+
+/* LOCK */
+.lock {
+  position:fixed; inset:0; background:rgba(4,4,7,.96); z-index:200;
+  display:none; flex-direction:column; align-items:center; justify-content:center; gap:36px;
+  animation: fi .3s ease;
+}
+.lock.on { display:flex; }
+@keyframes fi { from{opacity:0} to{opacity:1} }
+.lock-w { font-family:'Cormorant Garamond',serif; font-size:48px; font-weight:300; color:rgba(255,255,255,.12); letter-spacing:10px; }
+.lock-a { font-size:10px; color:rgba(255,255,255,.1); letter-spacing:4px; text-align:center; line-height:2.4; }
+.lock-back { position:absolute; bottom:44px; font-size:9px; color:rgba(255,255,255,.08); letter-spacing:3px; cursor:pointer; background:none; border:none; transition:color .2s; }
+.lock-back:hover { color:rgba(255,255,255,.2); }
+
+/* TOAST */
+.toast {
+  position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(16px);
+  background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07);
+  backdrop-filter:blur(16px); padding:9px 22px; border-radius:2px;
+  font-size:9px; letter-spacing:2px; color:var(--dim);
+  opacity:0; transition:all .28s ease; pointer-events:none; z-index:100; white-space:nowrap;
+}
+.toast.on { opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="nav">
+    <span class="logo">FL</span>
+    <button class="tab on" onclick="go('gate',this)">今</button>
+    <button class="tab" onclick="go('morning',this)">朝</button>
+    <button class="tab" onclick="go('night',this)">夜</button>
+    <button class="tab" onclick="go('stats',this)">記録</button>
+  </div>
+
+  <div class="timebar">
+    <span class="timebar-l">就寝まで</span>
+    <span class="timebar-r" id="cd">— —</span>
+  </div>
+
+  <div class="scroll">
+
+    <!-- GATE -->
+    <div class="pg on" id="pg-gate">
+      <div class="g-q">今、開く<em>理由</em>はあるか</div>
+      <p class="g-sub">手が無意識に動いていないか確認する</p>
+      <div class="g-axis">
+        <span class="g-time">23:30</span>
+        <span class="g-sep">—</span>
+        <span class="g-time">6:30</span>
+      </div>
+      <div class="g-tasks" id="gTasks"></div>
+      <div class="btns">
+        <button class="btn btn-y" onclick="gOpen()">目的がある</button>
+        <button class="btn btn-n" onclick="gLock()">ない、置く</button>
+      </div>
+    </div>
+
+    <!-- MORNING -->
+    <div class="pg" id="pg-morning">
+      <div class="s-head">今日やること</div>
+      <div class="tf"><div class="tf-num">01</div><input id="t1" placeholder="最重要" maxlength="36"></div>
+      <div class="tf"><div class="tf-num">02</div><input id="t2" placeholder="できれば" maxlength="36"></div>
+      <div class="tf"><div class="tf-num">03</div><input id="t3" placeholder="できれば" maxlength="36"></div>
+      <div class="m-lbl">コンディション</div>
+      <div class="pips">
+        <div class="pip" onclick="sm(1)"></div>
+        <div class="pip" onclick="sm(2)"></div>
+        <div class="pip" onclick="sm(3)"></div>
+        <div class="pip" onclick="sm(4)"></div>
+        <div class="pip" onclick="sm(5)"></div>
+      </div>
+      <button class="btn btn-y" onclick="saveMorn()">設定する</button>
+    </div>
+
+    <!-- NIGHT -->
+    <div class="pg" id="pg-night">
+      <div class="s-head">振り返り</div>
+      <div id="nChecks"></div>
+      <textarea class="note-f" id="nNote" placeholder="明日へ" rows="2"></textarea>
+      <button class="btn btn-y" onclick="saveNight()">保存する</button>
+    </div>
+
+    <!-- STATS -->
+    <div class="pg" id="pg-stats">
+      <div class="st-row">
+        <div class="st-blk"><div class="st-n" id="ss">0</div><div class="st-u">連続日</div></div>
+        <div class="st-blk"><div class="st-n" id="st">0</div><div class="st-u">記録日数</div></div>
+        <div class="st-blk"><div class="st-n" id="sa">—</div><div class="st-u">平均達成</div></div>
+      </div>
+      <div class="div"></div>
+      <div class="card"><div class="card-tag">7日間</div><div class="bars" id="bc"></div></div>
+      <div class="div"></div>
+      <div class="s-head">履歴</div>
+      <div id="hl"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="lock" id="lock">
+  <div class="lock-w">置く</div>
+  <div class="lock-a">23:30 就寝<br>6:30 起床<br><br>それが軸だ</div>
+  <button class="lock-back" onclick="cLock()">戻る</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const S = { load(){ try{return JSON.parse(localStorage.getItem('fl3')||'{}')}catch{return{}} }, save(d){localStorage.setItem('fl3',JSON.stringify(d))} };
+function dk(){ const n=new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`; }
+let db=S.load(), mood=0;
+
+// clock
+(function tick(){
+  const n=new Date(); let d=(23*60+30)-(n.getHours()*60+n.getMinutes()); if(d<0)d+=1440;
+  document.getElementById('cd').textContent = d===0?'就寝':d<60?`${d}m`:`${Math.floor(d/60)}h ${d%60}m`;
+  setTimeout(tick,15000);
+})();
+
+// tabs
+function go(name,btn){
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+  document.getElementById('pg-'+name).classList.add('on');
+  btn.classList.add('on');
+  db=S.load();
+  if(name==='gate') rGate();
+  if(name==='morning') lMorn();
+  if(name==='night') rNight();
+  if(name==='stats') rStats();
+}
+
+// gate
+function rGate(){
+  const td=db[dk()]; const el=document.getElementById('gTasks');
+  if(!td?.tasks?.some(Boolean)){el.innerHTML='';return;}
+  el.innerHTML=td.tasks.filter(Boolean).map(t=>`<div class="g-task">${t}</div>`).join('');
+}
+function gOpen(){
+  const p=prompt('何のために');
+  if(!p)return;
+  db[dk()]=db[dk()]||{}; db[dk()].opens=db[dk()].opens||[];
+  db[dk()].opens.push({t:new Date().toISOString(),p}); S.save(db); toast('了解');
+}
+function gLock(){ document.getElementById('lock').classList.add('on'); }
+function cLock(){ document.getElementById('lock').classList.remove('on'); }
+
+// morning
+function lMorn(){
+  const td=db[dk()]; if(!td)return;
+  if(td.tasks) td.tasks.forEach((t,i)=>{if(t){const el=document.getElementById('t'+(i+1));if(el)el.value=t;}});
+  if(td.mood) sm(td.mood);
+}
+function sm(v){ mood=v; document.querySelectorAll('.pip').forEach((p,i)=>p.classList.toggle('on',i<v)); }
+function saveMorn(){
+  const tasks=['t1','t2','t3'].map(id=>document.getElementById(id).value.trim());
+  if(!tasks[0]){toast('01 を入力してください');return;}
+  db[dk()]=db[dk()]||{}; db[dk()].tasks=tasks; db[dk()].mood=mood; db[dk()].mAt=new Date().toISOString();
+  S.save(db); toast('設定しました');
+}
+
+// night
+function rNight(){
+  const td=db[dk()]; const el=document.getElementById('nChecks');
+  if(!td?.tasks?.some(Boolean)){el.innerHTML='<div class="empty">朝の意図を先に設定してください</div>';return;}
+  const ch=td.checks||[false,false,false];
+  el.innerHTML=td.tasks.map((t,i)=>t?`<div class="ci" onclick="tc(${i})"><div class="cb ${ch[i]?'on':''}" id="cb${i}"></div><div class="ct ${ch[i]?'on':''}" id="ct${i}">${t}</div></div>`:'').join('');
+  const nn=document.getElementById('nNote'); if(td.note)nn.value=td.note;
+}
+function tc(i){
+  db[dk()]=db[dk()]||{}; db[dk()].checks=db[dk()].checks||[false,false,false];
+  db[dk()].checks[i]=!db[dk()].checks[i]; S.save(db);
+  const on=db[dk()].checks[i];
+  document.getElementById('cb'+i).classList.toggle('on',on);
+  document.getElementById('ct'+i).classList.toggle('on',on);
+}
+function saveNight(){
+  db[dk()]=db[dk()]||{}; db[dk()].note=document.getElementById('nNote').value;
+  db[dk()].nAt=new Date().toISOString();
+  const tasks=(db[dk()].tasks||[]).filter(Boolean), ch=db[dk()].checks||[];
+  db[dk()].score=tasks.length?Math.round(tasks.filter((_,i)=>ch[i]).length/tasks.length*100):0;
+  S.save(db); toast('保存しました');
+}
+
+// stats
+function rStats(){
+  const keys=Object.keys(db).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
+  const total=keys.filter(k=>db[k].nAt).length, today=new Date();
+  let streak=0;
+  for(let i=0;i<365;i++){
+    const d=new Date(today); d.setDate(d.getDate()-i);
+    const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    if(db[k]?.nAt)streak++; else if(i>0)break;
+  }
+  const sc=keys.filter(k=>db[k].score!=null).map(k=>db[k].score);
+  document.getElementById('ss').textContent=streak;
+  document.getElementById('st').textContent=total;
+  document.getElementById('sa').textContent=sc.length?Math.round(sc.reduce((a,b)=>a+b,0)/sc.length)+'%':'—';
+
+  const chart=document.getElementById('bc'), days=['日','月','火','水','木','金','土'];
+  chart.innerHTML='';
+  for(let i=6;i>=0;i--){
+    const d=new Date(today); d.setDate(d.getDate()-i);
+    const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const s=db[k]?.score; const h=s!=null?Math.max(s*.68,3):3;
+    chart.innerHTML+=`<div class="bc"><div class="bf ${i===0?'t':s!=null?'d':''}" style="height:${h}px"></div><div class="bd">${days[d.getDay()]}</div></div>`;
+  }
+
+  const hl=document.getElementById('hl');
+  const recs=keys.filter(k=>db[k].mAt||db[k].nAt).reverse().slice(0,20);
+  if(!recs.length){hl.innerHTML='<div class="empty">記録なし</div>';return;}
+  hl.innerHTML=recs.map(k=>{
+    const r=db[k], ts=(r.tasks||[]).filter(Boolean), ch=r.checks||[];
+    return `<div class="hr"><div class="hd">${k.slice(5)}</div><div class="ht">${ts.map((t,i)=>`<div class="hi ${ch[i]?'on':''}">${t}</div>`).join('')||'<div class="hi" style="color:var(--faint)">—</div>'}</div>${r.score!=null?`<div class="hs">${r.score}</div>`:''}</div>`;
+  }).join('');
+}
+
+function toast(m){
+  const el=document.getElementById('toast'); el.textContent=m;
+  el.classList.add('on'); setTimeout(()=>el.classList.remove('on'),2000);
+}
+</script>
+</body>
+</html>
